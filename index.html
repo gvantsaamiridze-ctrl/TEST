@@ -3,7 +3,7 @@
 <head>
 <meta charset="UTF-8">
 <meta name="viewport" content="width=device-width, initial-scale=1.0">
-<title>ამერიკული ბუღალტრული აღრიცხვის სერტიფიკაციის ტესტი</title>
+<title>US Bookkeeping test</title>
 <meta name="description" content="ბუღალტრული აღრიცხვის სერტიფიკაციის ტესტი — Xero, QuickBooks Online, აშშ-ის გადასახადები, ბიზნეს ფორმები, GAAP.">
 <style>
   :root {
@@ -259,8 +259,7 @@
 <body>
 
 <header>
-  <h1>ამერიკული ბუღალტრული აღრიცხვის სერტიფიკაციის ტესტი</h1>
-  <p>ბუღალტრული აღრიცხვის სერტიფიკაციის ტესტი</p>
+  <h1>US Bookkeeping test</h1>
 </header>
 
 <main>
@@ -274,10 +273,10 @@
     </p>
 
     <form id="startForm" novalidate>
-      <label for="fullName">სახელი და გვარი</label>
+      <label for="fullName">Name and Surname</label>
       <input id="fullName" type="text" autocomplete="name" maxlength="80" placeholder="მაგ. ნინო ბერიძე">
 
-      <label for="email">ელფოსტა</label>
+      <label for="email">Mail</label>
       <input id="email" type="email" autocomplete="email" maxlength="120" placeholder="name@example.com">
 
       <div id="startError" class="error" role="alert"></div>
@@ -339,6 +338,7 @@
     <div class="card no-print center">
       <h2>გილოცავთ!</h2>
       <p class="sub">თქვენ წარმატებით ჩააბარეთ ტესტი. სერტიფიკატი მზადაა.<br></p>
+      <p id="mailNote" class="sub" style="font-weight:600"></p>
       <div class="btn-row" style="justify-content:center">
         <button class="btn" id="pdfBtn" type="button">PDF სერტიფიკატის ჩამოტვირთვა</button>
         <button class="btn secondary" id="linkedinBtn" type="button">LinkedIn-ზე გაზიარება</button>
@@ -353,11 +353,11 @@
       <div class="certificate" id="certificate">
         <div class="kicker">Certificate of Completion</div>
         <h2>Professional Certification</h2>
-        <div class="kicker" style="margin-top:4px">US Bookkeeping Certification Test</div>
+        <div class="kicker" style="margin-top:4px">US Bookkeeping test</div>
         <p class="body" style="margin-top:22px">This certifies that</p>
         <div class="name" id="certName">Student Name</div>
         <p class="body">
-          has successfully completed the US Bookkeeping Certification Test with a score of
+          has successfully completed the US Bookkeeping test with a score of
           <strong id="certScore">0%</strong>, meeting the passing criteria (70%).
         </p>
         <div class="stamp">CERTIFIED</div>
@@ -377,7 +377,7 @@
 
 </main>
 
-<footer>© <span id="year"></span> · ამერიკული ბუღალტრული აღრიცხვის სერტიფიკაციის ტესტი</footer>
+<footer>© <span id="year"></span> · US Bookkeeping test</footer>
 <div id="toast" class="toast" role="status" aria-live="polite"></div>
 
 <script>
@@ -389,7 +389,9 @@ const CONFIG = {
   passingPct: 70,
   instructor: "Gvantsa Amiridze",
   certPrefix: "USBK",
-  linkedinText: "I just passed the US Bookkeeping Certification Test (Xero, QuickBooks Online, US tax, business forms, GAAP) with a score of {score}%!"
+  // Google Apps Script web app URL that emails the certificate (see apps-script/Code.gs). Leave "" to disable.
+  certEndpoint: "",
+  linkedinText: "I just passed the US Bookkeeping test (Xero, QuickBooks Online, US tax, business forms, GAAP) with a score of {score}%!"
 };
 
 /* ============================================================
@@ -675,7 +677,9 @@ const state = {
   timerId: null,
   endAt: 0,
   submitted: false,
-  result: null
+  result: null,
+  cert: null,
+  certSent: false
 };
 
 const $ = id => document.getElementById(id);
@@ -814,6 +818,8 @@ function updateProgress() {
 function startQuiz() {
   state.submitted = false;
   state.result = null;
+  state.cert = null;
+  state.certSent = false;
   state.answers = new Array(TOTAL).fill(null);
   renderQuestions();
   show("viewQuiz");
@@ -872,6 +878,7 @@ function submitQuiz(auto) {
   state.result = { correct, pct, perSection, passed: pct >= CONFIG.passingPct, auto };
   renderResult();
   show("viewResult");
+  if (state.result.passed) prepareCertificate();
 }
 
 /* ============================================================
@@ -930,16 +937,64 @@ $("resultCertBtn").addEventListener("click", () => openCertificate());
 /* ============================================================
    CERTIFICATE
    ============================================================ */
+function todayStr() {
+  return new Date().toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" });
+}
+
+// Create the certificate once per passing result, so the emailed and displayed certificate match
+function prepareCertificate() {
+  if (!state.result || !state.result.passed || state.cert) return;
+  state.cert = { id: randomId(), date: todayStr() };
+  sendCertificateEmail();
+}
+
+async function sendCertificateEmail() {
+  if (!CONFIG.certEndpoint || state.certSent) return;
+  state.certSent = true;
+  const payload = {
+    name: state.user.name,
+    email: state.user.email,
+    score: state.result.pct,
+    date: state.cert.date,
+    certId: state.cert.id,
+    instructor: CONFIG.instructor,
+    testName: "US Bookkeeping test"
+  };
+  try {
+    // no-cors: the browser cannot read the reply, so this only confirms the request was sent
+    await fetch(CONFIG.certEndpoint, {
+      method: "POST",
+      mode: "no-cors",
+      headers: { "Content-Type": "text/plain;charset=utf-8" },
+      body: JSON.stringify(payload)
+    });
+    toast("სერტიფიკატი იგზავნება მეილზე: " + state.user.email);
+    updateMailNote(true);
+  } catch (e) {
+    state.certSent = false;
+    toast("სერტიფიკატის გაგზავნა ვერ მოხერხდა. სცადეთ თავიდან.");
+    updateMailNote(false);
+  }
+}
+
+function updateMailNote(sent) {
+  const n = $("mailNote");
+  if (!CONFIG.certEndpoint) { n.textContent = ""; return; }
+  n.textContent = sent
+    ? "სერტიფიკატი გაიგზავნა მეილზე: " + state.user.email
+    : "სერტიფიკატის გაგზავნა ვერ მოხერხდა.";
+}
+
 function openCertificate() {
   const r = state.result;
   if (!r || !r.passed) return;
-  const today = new Date();
-  const dateStr = today.toLocaleDateString("en-GB", { day: "2-digit", month: "long", year: "numeric" });
+  if (!state.cert) prepareCertificate();
   $("certName").textContent = state.user.name;
   $("certScore").textContent = r.pct + "%";
-  $("certDate").textContent = dateStr;
-  $("certId").textContent = randomId();
+  $("certDate").textContent = state.cert.date;
+  $("certId").textContent = state.cert.id;
   $("certInstructor").textContent = CONFIG.instructor;
+  updateMailNote(state.certSent);
   show("viewCert");
 }
 
