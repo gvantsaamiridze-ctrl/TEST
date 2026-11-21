@@ -274,10 +274,10 @@
 
     <form id="startForm" novalidate>
       <label for="fullName">Name and Surname</label>
-      <input id="fullName" type="text" autocomplete="name" maxlength="80" placeholder="მაგ. ნინო ბერიძე">
+      <input id="fullName" type="text" autocomplete="name" maxlength="80" placeholder="example name">
 
       <label for="email">Mail</label>
-      <input id="email" type="email" autocomplete="email" maxlength="120" placeholder="name@example.com">
+      <input id="email" type="email" autocomplete="email" maxlength="120" placeholder="example mail">
 
       <div id="startError" class="error" role="alert"></div>
 
@@ -724,11 +724,6 @@ function randomId() {
 $("qCount").textContent = TOTAL;
 $("qCountText").textContent = TOTAL;
 
-// Restore a remembered name/email (per-viewer convenience only)
-try {
-  $("fullName").value = safeStorageGet("usbk_name") || "";
-  $("email").value = safeStorageGet("usbk_email") || "";
-} catch (e) { /* ignore */ }
 
 $("startForm").addEventListener("submit", e => {
   e.preventDefault();
@@ -738,8 +733,6 @@ $("startForm").addEventListener("submit", e => {
   if (!isValidEmail(email)) { $("startError").textContent = "გთხოვთ შეიყვანოთ სწორი ელფოსტა."; $("email").focus(); return; }
   $("startError").textContent = "";
   state.user = { name, email };
-  safeStorageSet("usbk_name", name);
-  safeStorageSet("usbk_email", email);
   startQuiz();
 });
 
