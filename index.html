@@ -341,7 +341,6 @@
       <p id="mailNote" class="sub" style="font-weight:600"></p>
       <div class="btn-row" style="justify-content:center">
         <button class="btn" id="pdfBtn" type="button">PDF სერტიფიკატის ჩამოტვირთვა</button>
-        <button class="btn secondary" id="linkedinBtn" type="button">LinkedIn-ზე გაზიარება</button>
         <button class="btn secondary" id="printBtn" type="button">ბეჭდვა / PDF-ად შენახვა</button>
       </div>
       <p class="sub" style="margin-top:14px; font-size:.85rem">
@@ -1003,14 +1002,6 @@ $("printBtn").addEventListener("click", () => window.print());
 $("backToResult").addEventListener("click", () => show("viewResult"));
 $("restartBtn").addEventListener("click", () => show("viewStart"));
 
-$("linkedinBtn").addEventListener("click", async () => {
-  const r = state.result;
-  const text = CONFIG.linkedinText.replace("{score}", r ? r.pct : "");
-  try { await navigator.clipboard.writeText(text); toast("ტექსტი კოპირებულია. LinkedIn-ში მიამაგრეთ თქვენი PDF."); }
-  catch (e) { toast("ტექსტი ვერ დაკოპირდა."); }
-  const url = encodeURIComponent(location.href.split("#")[0]);
-  window.open(`https://www.linkedin.com/sharing/share-offsite/?url=${url}`, "_blank", "noopener");
-});
 
 /* ============================================================
    MISC
