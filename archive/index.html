@@ -1,0 +1,117 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8" />
+  <meta name="viewport" content="width=device-width, initial-scale=1.0" />
+  <title>US Bookkeeping Certification Test</title>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/html2canvas/1.4.1/html2canvas.min.js"></script>
+  <script src="https://cdnjs.cloudflare.com/ajax/libs/jspdf/2.5.1/jspdf.umd.min.js"></script>
+  <style>
+    :root{--navy:#14213d;--gold:#b8912e;--cream:#fbf7ec;--paper:#fffdf8;--green:#217346;--red:#b33a2b;--line:#e6dfc8;--muted:#6b7280;}
+    *{box-sizing:border-box} body{margin:0;font-family:Arial,Helvetica,sans-serif;background:var(--cream);color:var(--navy)}
+    .wrap{max-width:980px;margin:auto;padding:22px}.hero{background:linear-gradient(135deg,#14213d,#24436f);color:white;padding:28px;border-radius:18px;margin:18px 0;box-shadow:0 12px 30px rgba(20,33,61,.18)}
+    .hero h1{margin:0 0 8px;font-size:30px}.hero p{margin:0;color:#e7edf8}.card{background:white;border:1px solid var(--line);border-radius:18px;padding:24px;margin:18px 0;box-shadow:0 8px 24px rgba(20,33,61,.10)}
+    label{font-weight:700;margin:12px 0 6px;display:block} input[type=text],input[type=email]{width:100%;padding:12px;border:1px solid #d7d1bd;border-radius:10px;font-size:16px}
+    .btn{border:0;border-radius:10px;padding:12px 18px;font-weight:700;cursor:pointer;margin:8px 8px 8px 0}.primary{background:var(--navy);color:white}.gold{background:var(--gold);color:white}.ghost{background:white;border:1px solid var(--line);color:var(--navy)}
+    .q{border-top:1px solid var(--line);padding:18px 0}.q:first-child{border-top:0}.q-title{font-weight:700;font-size:17px;line-height:1.45}.q small{display:block;color:var(--muted);margin-top:4px}.choice{display:block;padding:9px 10px;margin:6px 0;border-radius:10px;background:#fcfbf6;border:1px solid #eee6cf}.choice:hover{background:#f6f0dc}.choice input{margin-right:8px}
+    .hidden{display:none!important}.score{font-size:52px;font-weight:800;margin:12px 0}.pass{color:var(--green)}.fail{color:var(--red)}.note{color:var(--muted);font-size:14px;line-height:1.5}.timer{position:sticky;top:0;background:#fff8df;border:1px solid #ecd587;padding:12px;border-radius:12px;margin-bottom:14px;font-weight:800;color:#5b3d00;z-index:5}
+    #certificate-wrap{display:flex;justify-content:center;margin:22px 0}#certificate{width:900px;max-width:100%;aspect-ratio:1.42/1;background:#f8f1de;border:3px solid var(--navy);padding:18px;position:relative;overflow:hidden}
+    #certificate:before{content:"";position:absolute;inset:28px;border:2px solid var(--gold)}#certificate .inner{position:relative;height:100%;display:flex;flex-direction:column;align-items:center;text-align:center;justify-content:center;padding:38px 48px}
+    .kicker{letter-spacing:.22em;text-transform:uppercase;color:var(--gold);font-size:13px;font-weight:800;margin:0 0 12px}.cert-title{font-family:Georgia,serif;font-size:38px;margin:0 0 22px}.lead{color:var(--muted);margin:0 0 8px}.student-name{font-family:Georgia,serif;font-size:38px;border-bottom:2px solid #d9bd65;min-width:60%;padding:8px 18px;margin:4px 0 22px}.desc{font-size:17px;line-height:1.65;max-width:680px;color:#374151}.footer-row{display:flex;justify-content:space-between;align-items:flex-end;width:100%;margin-top:auto}.meta{text-align:left;color:#6b7280;font-size:13px}.seal{height:92px;width:92px;border-radius:50%;background:radial-gradient(circle at 35% 30%,#efd783,var(--gold));display:flex;align-items:center;justify-content:center;color:white;font-weight:900;font-size:12px;box-shadow:0 5px 12px rgba(0,0,0,.2)}
+    @media print{body{background:white}.hero,.no-print,.card:not(#cert-card){display:none!important}#cert-card{box-shadow:none;border:0}#certificate{max-width:100%;}}
+  </style>
+</head>
+<body>
+<div class="wrap">
+  <div class="hero"><h1>US Bookkeeping Certification Test</h1><p>Bilingual quiz for students. Passing score: <b>70%</b>. Certificate is issued automatically after passing.</p></div>
+
+  <div id="start" class="card">
+    <h2>Start the test / ტესტის დაწყება</h2>
+    <p class="note">Enter your name and email. After you pass with 70% or more, you can download your English certificate and share it on LinkedIn.</p>
+    <label>Full name / სახელი და გვარი</label><input id="name" type="text" placeholder="Example: Nino Beridze" />
+    <label>Email / ელფოსტა</label><input id="email" type="email" placeholder="name@example.com" />
+    <p id="err" class="note" style="color:var(--red)"></p>
+    <button class="btn primary" onclick="startQuiz()">Start Quiz</button>
+  </div>
+
+  <div id="quiz" class="card hidden">
+    <div class="timer">Time left: <span id="timeLeft">30:00</span></div>
+    <h2>Final Quiz</h2><p class="note">Answer all questions and submit. Each question has one correct answer.</p>
+    <form id="quizForm"></form>
+    <button type="button" class="btn primary" onclick="submitQuiz()">Submit answers</button>
+    <button type="button" class="btn ghost" onclick="location.reload()">Cancel</button>
+  </div>
+
+  <div id="resultFail" class="card hidden"><h2>Result</h2><div class="score fail" id="failScore">0%</div><p id="failText"></p><button class="btn primary" onclick="restartSameStudent()">Try again</button></div>
+
+  <div id="cert-card" class="card hidden">
+    <h2 class="no-print">Congratulations!</h2><div class="score pass no-print" id="passScore">0%</div>
+    <div id="certificate-wrap"><div id="certificate"><div class="inner">
+      <p class="kicker">Professional Certification</p>
+      <h3 class="cert-title">Certificate of Completion</h3>
+      <p class="lead">This certifies that</p>
+      <div class="student-name" id="certName">Student Name</div>
+      <p class="desc">has successfully completed the <b id="certQuiz">US Bookkeeping Certification Test</b> with a score of <b id="certScore">0%</b>, meeting the required passing criteria.</p>
+      <div class="footer-row"><div class="meta">Date: <span id="certDate">—</span><br>Certificate ID: <span id="certId">—</span><br>Instructor: Gvantsa Amiridze</div><div class="seal">CERTIFIED</div></div>
+    </div></div></div>
+    <div class="no-print">
+      <button class="btn gold" onclick="downloadPDF()">Download PDF Certificate</button>
+      <button class="btn primary" onclick="shareLinkedIn()">Share on LinkedIn</button>
+      <button class="btn ghost" onclick="window.print()">Print / Save as PDF</button>
+    </div>
+    <p class="note no-print">LinkedIn button copies a ready post text and opens LinkedIn. Attach the downloaded certificate manually.</p>
+  </div>
+</div>
+<script>
+// OPTIONAL GOOGLE SHEETS INTEGRATION:
+// 1) Create Apps Script Web App. 2) Paste URL below between quotes.
+const GOOGLE_SCRIPT_URL = ""; // Example: "https://script.google.com/macros/s/XXXX/exec"
+const PASS_PERCENT = 70;
+const TIME_LIMIT_MINUTES = 30;
+let student = {}; let timer; let secondsLeft = TIME_LIMIT_MINUTES*60;
+const questions = [
+{q:"Which business type has unlimited personal liability? / რომელი ბიზნეს ფორმა აქვს შეუზღუდავი პირადი პასუხისმგებლობა?",o:["LLC / LLC","C Corporation / C კორპორაცია","Sole Proprietorship / ინდივიდუალური მეწარმე","S Corporation / S კორპორაცია"],a:2},
+{q:"What tax form is used by sole proprietors to report income and expenses? / რომელი ფორმა გამოიყენება ინდივიდუალური მეწარმის შემოსავლისა და ხარჯების დასაფიქსირებლად?",o:["W-2","Schedule C","Form 941","1099-K"],a:1},
+{q:"How is income taxed in a partnership? / როგორ იბეგრება შემოსავალი პარტნიორობაში?",o:["At corporate level / კორპორაციულ დონეზე","Double taxation / ორმაგი დაბეგვრა","Pass-through to partners / გადადის პარტნიორებზე","Not taxed / არ იბეგრება"],a:2},
+{q:"What is the main advantage of an LLC? / რა არის LLC-ის მთავარი უპირატესობა?",o:["No tax / გადასახადი არ აქვს","Unlimited shareholders / შეუზღუდავი აქციონერები","Liability protection + flexible taxation / პასუხისმგებლობის დაცვა და მოქნილი დაბეგვრა","Mandatory corporate tax / სავალდებულო კორპორაციული გადასახადი"],a:2},
+{q:"What does double taxation mean? / რას ნიშნავს ორმაგი დაბეგვრა?",o:["Tax on expenses / ხარჯებზე გადასახადი","Corporate tax and dividend tax / კორპორაციული და დივიდენდის გადასახადი","One-time tax / ერთჯერადი გადასახადი","Asset tax / აქტივის გადასახადი"],a:1},
+{q:"Which accounting standard is used in the U.S.? / რომელი ბუღალტრული სტანდარტი გამოიყენება აშშ-ში?",o:["IFRS","GAAP","IPSAS","Only tax code / მხოლოდ საგადასახადო კოდექსი"],a:1},
+{q:"Which inventory method is allowed under GAAP but not IFRS? / რომელი მარაგების მეთოდია დაშვებული GAAP-ში, მაგრამ არა IFRS-ში?",o:["FIFO","Average","LIFO","Weighted average"],a:2},
+{q:"Under GAAP, development costs are usually: / GAAP-ის მიხედვით განვითარების ხარჯები ჩვეულებრივ არის:",o:["Capitalised / კაპიტალიზებული","Expensed immediately / დაუყოვნებლივ ხარჯად აღიარებული","Deferred / გადავადებული","Ignored / იგნორირებული"],a:1},
+{q:"What is the Matching Principle? / რა არის Matching Principle?",o:["Recognise cash only / მხოლოდ ფულის აღიარება","Match expenses with related revenue / ხარჯების დაკავშირება შესაბამის შემოსავალთან","Ignore small costs / მცირე ხარჯების იგნორირება","Record once a year / წელიწადში ერთხელ აღრიცხვა"],a:1},
+{q:"What is Accrual Accounting? / რა არის Accrual Accounting?",o:["Cash only / მხოლოდ ფულის მიხედვით","Record transactions when they occur / ოპერაციების აღრიცხვა მათი მოხდენისას","Revenue only / მხოლოდ შემოსავალი","Year-end only / მხოლოდ წლის ბოლოს"],a:1},
+{q:"What is an example of Accounts Payable? / რა არის Accounts Payable-ის მაგალითი?",o:["Sending invoice / ინვოისის გაგზავნა","Receiving payment / გადახდის მიღება","Vendor bill / მომწოდებლის ინვოისი","Bank deposit / საბანკო დეპოზიტი"],a:2},
+{q:"What is Accounts Receivable? / რა არის Accounts Receivable?",o:["Liability / ვალდებულება","Money owed by customers / მომხმარებლებისგან მისაღები თანხა","Loan / სესხი","Inventory / მარაგი"],a:1},
+{q:"Sending an invoice increases which account? / ინვოისის გაგზავნა რომელ ანგარიშს ზრდის?",o:["Accounts Payable","Revenue only","Accounts Receivable","Expense"],a:2},
+{q:"Which payments are NOT reported on 1099 by the business? / რომელი გადახდები არ შედის 1099-ში ბიზნესის მხრიდან?",o:["Cash","ACH","Check","Credit card"],a:3},
+{q:"When is 1099-NEC generally required? / როდის არის 1099-NEC ჩვეულებრივ საჭირო?",o:["Any amount","Over $100","$600 or more","Corporations only"],a:2},
+{q:"What is the bookkeeper's role with W-9? / რა არის ბუღალტრის როლი W-9 ფორმასთან დაკავშირებით?",o:["File taxes / დეკლარაციების წარდგენა","Collect and verify / შეგროვება და გადამოწმება","Audit / აუდიტი","Pay taxes / გადასახადების გადახდა"],a:1},
+{q:"In payroll entries, the debit side usually includes: / Payroll გატარებებში Debit მხარეს ჩვეულებრივ შედის:",o:["Cash only","Expenses","Liabilities","Revenue"],a:1},
+{q:"How is sales tax recorded? / როგორ აღირიცხება Sales Tax?",o:["Revenue / შემოსავალი","Expense / ხარჯი","Liability / ვალდებულება","Asset / აქტივი"],a:2},
+{q:"Which report shows profitability? / რომელი რეპორტი აჩვენებს მოგებიანობას?",o:["Balance Sheet","Cash Flow","Profit & Loss","Trial Balance"],a:2},
+{q:"What does AR Aging report show? / რას აჩვენებს AR Aging რეპორტი?",o:["Expenses","Overdue invoices by age / ვადაგადაცილებული ინვოისები ასაკის მიხედვით","Payroll","Assets"],a:1},
+{q:"What is QuickBooks Online mainly used for? / რისთვის გამოიყენება QuickBooks Online ძირითადად?",o:["Video editing","Accounting & bookkeeping / ბუღალტერია და აღრიცხვა","Graphic design","Marketing"],a:1},
+{q:"What does the Bank Feed show in QuickBooks? / რას აჩვენებს Bank Feed QuickBooks-ში?",o:["Customer invoices","Bank transactions / საბანკო ოპერაციები","Payroll only","Taxes"],a:1},
+{q:"What happens when you create an invoice? / რა ხდება ინვოისის შექმნის დროს?",o:["Expense increases","Accounts Payable increases","Accounts Receivable increases / მისაღები ანგარიშები იზრდება","Cash decreases"],a:2},
+{q:"What is a Vendor in QuickBooks? / რა არის Vendor QuickBooks-ში?",o:["Customer","Employee","Supplier / მომწოდებელი","Bank"],a:2},
+{q:"What is the purpose of reconciliation? / რა არის Reconciliation-ის მიზანი?",o:["Create invoices","Match bank and accounting records / საბანკო და ბუღალტრული ჩანაწერების შედარება","Add customers","Record payroll"],a:1},
+{q:"Where do you categorise expenses in QuickBooks? / სად ხდება ხარჯების კატეგორიზაცია QuickBooks-ში?",o:["Payroll tab","Chart of Accounts / ანგარიშთა გეგმა","Reports only","Settings"],a:1},
+{q:"What report shows unpaid customer invoices? / რომელი რეპორტი აჩვენებს გადაუხდელ ინვოისებს?",o:["P&L","Balance Sheet","AR Aging Report","Cash Flow"],a:2},
+{q:"Which Excel formula adds numbers together? / რომელი Excel ფორმულა აჯამებს რიცხვებს?",o:["AVERAGE","SUM","COUNT","IF"],a:1},
+{q:"What does the AVERAGE function do? / რას აკეთებს AVERAGE ფუნქცია?",o:["Counts values","Finds highest value","Calculates mean / ითვლის საშუალო მნიშვნელობას","Sorts data"],a:2},
+{q:"Which formula finds the highest value? / რომელი ფორმულა პოულობს ყველაზე დიდ მნიშვნელობას?",o:["MIN","MAX","SUM","IF"],a:1},
+{q:"What does the IF function do? / რას აკეთებს IF ფუნქცია?",o:["Adds numbers","Applies condition logic / იყენებს პირობით ლოგიკას","Sorts data","Counts values"],a:1},
+{q:"Which formula counts numeric cells? / რომელი ფორმულა ითვლის რიცხვიან უჯრებს?",o:["COUNT","SUM","MAX","IF"],a:0}
+];
+function startQuiz(){const n=document.getElementById('name').value.trim();const e=document.getElementById('email').value.trim();const err=document.getElementById('err');err.textContent='';if(!n){err.textContent='Please enter full name.';return}if(!/^\S+@\S+\.\S+$/.test(e)){err.textContent='Please enter valid email.';return}student={name:n,email:e};document.getElementById('start').classList.add('hidden');document.getElementById('quiz').classList.remove('hidden');renderQuestions();startTimer();}
+function renderQuestions(){const f=document.getElementById('quizForm');f.innerHTML='';questions.forEach((x,i)=>{const d=document.createElement('div');d.className='q';d.innerHTML=`<div class="q-title">${i+1}. ${x.q}</div>`+x.o.map((op,j)=>`<label class="choice"><input type="radio" name="q${i}" value="${j}">${op}</label>`).join('');f.appendChild(d);});}
+function startTimer(){timer=setInterval(()=>{secondsLeft--;let m=Math.floor(secondsLeft/60),s=secondsLeft%60;document.getElementById('timeLeft').textContent=String(m).padStart(2,'0')+':'+String(s).padStart(2,'0');if(secondsLeft<=0){clearInterval(timer);submitQuiz();}},1000)}
+async function submitQuiz(){clearInterval(timer);let correct=0;questions.forEach((x,i)=>{const checked=document.querySelector(`input[name="q${i}"]:checked`);if(checked && Number(checked.value)===x.a)correct++;});const percent=Math.round(correct/questions.length*100);const passed=percent>=PASS_PERCENT;const record={name:student.name,email:student.email,score:percent,correct,total:questions.length,passed,date:new Date().toISOString(),certificateId:'USBK-'+Date.now().toString().slice(-8)};sendToGoogleSheets(record);document.getElementById('quiz').classList.add('hidden');if(passed){showCertificate(record)}else{document.getElementById('failScore').textContent=percent+'%';document.getElementById('failText').textContent=`Correct answers: ${correct}/${questions.length}. Required score: ${PASS_PERCENT}%.`;document.getElementById('resultFail').classList.remove('hidden');}}
+function showCertificate(r){document.getElementById('cert-card').classList.remove('hidden');document.getElementById('passScore').textContent=r.score+'%';document.getElementById('certName').textContent=r.name;document.getElementById('certScore').textContent=r.score+'%';document.getElementById('certDate').textContent=new Date(r.date).toLocaleDateString('en-GB');document.getElementById('certId').textContent=r.certificateId;}
+function restartSameStudent(){document.getElementById('resultFail').classList.add('hidden');document.getElementById('quiz').classList.remove('hidden');secondsLeft=TIME_LIMIT_MINUTES*60;renderQuestions();startTimer();}
+async function downloadPDF(){const el=document.getElementById('certificate');const canvas=await html2canvas(el,{scale:2,backgroundColor:'#f8f1de'});const img=canvas.toDataURL('image/png');const {jsPDF}=window.jspdf;const pdf=new jsPDF({orientation:'landscape',unit:'pt',format:'a4'});const pw=pdf.internal.pageSize.getWidth(),ph=pdf.internal.pageSize.getHeight();const ratio=Math.min(pw/canvas.width,ph/canvas.height)*.94;const w=canvas.width*ratio,h=canvas.height*ratio;pdf.addImage(img,'PNG',(pw-w)/2,(ph-h)/2,w,h);pdf.save('US-Bookkeeping-Certificate-'+student.name.replace(/\s+/g,'_')+'.pdf');}
+function shareLinkedIn(){const txt=`I am proud to share that I successfully completed the US Bookkeeping Certification Test with a passing score. Thank you to Gvantsa Amiridze for the practical training. #Accounting #Bookkeeping #QuickBooks #CareerGrowth`;navigator.clipboard&&navigator.clipboard.writeText(txt);window.open('https://www.linkedin.com/feed/','_blank');alert('LinkedIn post text copied. Attach your downloaded certificate manually.');}
+function sendToGoogleSheets(record){if(!GOOGLE_SCRIPT_URL)return;fetch(GOOGLE_SCRIPT_URL,{method:'POST',mode:'no-cors',headers:{'Content-Type':'application/json'},body:JSON.stringify(record)}).catch(()=>{});}
+</script>
+</body>
+</html>
